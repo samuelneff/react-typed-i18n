@@ -1,0 +1,28 @@
+///////////////////////////////////
+//
+// GENERATED FILE - DO NOT EDIT
+//
+// Entrypoint for generated localized strings.
+//
+
+export const locales = [
+  %localeList%
+];
+
+export const defaultLocale = '%defaultLocale%';
+
+export interface LocalizedStrings {
+  locale: string;
+  %stringsTypeSections%
+}
+
+%propTypeDeclarations%
+
+export function getLocale(locale: string) {
+  if (!locales.includes(locale)) {
+    throw new Error(`Requested an unsupported locale. Requested ${ locale }. Available locales are ${ locales.join(', ') }.`);
+  }
+
+  const stringsModule = await import(`./${ locale }`);
+  return stringsModule.strings;
+}

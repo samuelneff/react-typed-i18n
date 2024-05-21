@@ -1,0 +1,9 @@
+    %camelKey%(props: %propsType%) {
+      return (
+        formatters['%formatterKey%'] ?? (
+          formatters['%formatterKey%'] = new IntlMessageFormat(
+            %ast%,
+            '%locale%'
+          )
+      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+    },

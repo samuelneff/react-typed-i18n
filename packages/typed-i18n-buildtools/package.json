@@ -1,0 +1,24 @@
+{
+  "name": "typed-i18n-buildtools",
+  "version": "1.0.0",
+  "description": "Build tools used internally by typed-18n",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samuelneff/typed-i18n.git"
+  },
+  "keywords": [
+    "i18n",
+    "react",
+    "localization"
+  ],
+  "author": "Samuel Neff <sam@serndesign.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/samuelneff/typed-i18n/issues"
+  },
+  "homepage": "https://github.com/samuelneff/typed-i18n#readme"
+}

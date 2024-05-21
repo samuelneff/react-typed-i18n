@@ -1,0 +1,18 @@
+///////////////////////////////////
+//
+// GENERATED FILE - DO NOT EDIT
+//
+// Localized strings for %locale%.
+//
+import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
+import {
+  LocalizedStrings,
+%importPropTypes%
+} from './index';
+
+const formatters = {} as Record<string, IntlMessageFormat>;
+
+export const strings: LocalizedStrings = {
+  locale: '%locale%',
+%localizedStringsSections%
+};
