@@ -2,7 +2,7 @@ import * as fs from 'fs/promises';
 import { camelCase, upperFirst } from 'lodash';
 import * as path from 'path';
 import { PluginContext } from 'rollup';
-import { Plugin } from 'vite';
+import { HmrContext, Plugin } from 'vite';
 import { parse as parseYaml } from 'yaml';
 import {
   isNullOrUndefined,
@@ -45,7 +45,7 @@ export function typedI18nPlugin({
 }: TypedI18nPluginProps) {
 
   const appliedDefaultLocale = defaultLocale ?? Intl.DateTimeFormat().resolvedOptions().locale;
-  const appliedTemplatesDir = templatesDir ?? path.join(__dirname, 'templates');
+  const appliedTemplatesDir = templatesDir ?? path.join(__dirname, '../templates');
 
   let indexStringsMemberConstTemplate: string;
   let indexStringsMemberFormatTemplate: string;
@@ -91,6 +91,19 @@ export function typedI18nPlugin({
       this.addWatchFile(sourceDir);
       await readLocaleDirs();
       await generateAllLocales();
+    },
+
+    async handleHotUpdate({ file }: HmrContext) {
+
+      if (!file.startsWith(sourceDir) || !isYaml(file)) {
+        return;
+      }
+      const hotLocale = path.basename(path.dirname(file));
+      if (hotLocale === appliedDefaultLocale) {
+        await generateAllLocales();
+      } else {
+        await generateLocale(hotLocale);
+      }
     }
   } as Plugin;
 
@@ -108,15 +121,17 @@ export function typedI18nPlugin({
     locales = newLocales;
   }
 
-  function generateAllLocales() {
-    return Promise.all(locales.map(generateLocale));
+  async function generateAllLocales() {
+    for (const locale of locales) {
+      await generateLocale(locale);
+    }
   }
 
   async function generateLocale(locale: string) {
     const localeDir = path.join(sourceDir, locale);
     const filesnames = (
       await fs.readdir(localeDir)
-    ).filter(filename => filename.endsWith('.yaml') || filename.endsWith('.yml'));
+    ).filter(isYaml);
 
     importPropTypes = '';
     localizedStringsSections = '';
@@ -135,7 +150,7 @@ export function typedI18nPlugin({
       if (sectionStrings === null) {
         continue;
       }
-      if (locale === defaultLocale) {
+      if (locale === appliedDefaultLocale) {
         defaultStrings[ sectionName ] = {};
       }
       localizeSection(sectionName, sectionStrings);
@@ -152,12 +167,12 @@ export function typedI18nPlugin({
 
     await fs.writeFile(path.join(outDir, `${ locale }.ts`), localeFileContent);
 
-    if (locale === defaultLocale) {
+    if (locale === appliedDefaultLocale) {
       const indexFileContent = fillInTemplate(
         indexFileTemplate,
         {
           localeList: `"${ locales.join('",\n  "') }"`,
-          defaultLocale,
+          appliedDefaultLocale,
           stringsTypeSections,
           propTypeDeclarations,
         }
@@ -184,7 +199,6 @@ export function typedI18nPlugin({
       if (error) {
         fullMessage += `\n\n${ (error as Error).stack ?? error }`
       }
-
       return fullMessage;
     }
 
@@ -205,6 +219,8 @@ export function typedI18nPlugin({
         viteContext.error(fullMessage);
       }
       viteContext.warn(fullMessage);
+
+      return fullMessage;
     }
 
     function safeReadFile(filePath: string) {
@@ -238,6 +254,7 @@ export function typedI18nPlugin({
     function localizeSection(sectionName: string, sectionStrings: Record<string, string>) {
       try {
         localizedStringsSectionMembers = '';
+        sectionTypeMembers = '';
         const entries = Object.entries(sectionStrings);
         for (const [key, value] of entries) {
           localizeEntry(sectionName, key, value);
@@ -251,18 +268,19 @@ export function typedI18nPlugin({
           }
         )
 
-        if (locale === defaultLocale) {
+        if (locale === appliedDefaultLocale) {
           stringsTypeSections += fillInTemplate(
             indexStringsSectionTemplate,
             {
-              sectionTypeMembers
+              sectionName,
+              sectionTypeMembers,
             }
           );
         }
       } catch (error) {
         viteContext.warn(
           createLogMessage(
-            `An unexpected error processing '${ sectionName }.`,
+            `An unexpected error processing '${ sectionName }.'`,
             error,
             `This portion of localization will be excluded from all locales.`,
             'This portion of localization will be excluded from this locale.'
@@ -306,11 +324,11 @@ export function typedI18nPlugin({
         return;
       }
 
-      const defaultSectionStrings = defaultStrings[ defaultLocale ];
-      if (locale !== defaultLocale && !(camelKey in defaultSectionStrings)) {
+      const defaultSectionStrings = defaultStrings[ sectionName ];
+      if (locale !== appliedDefaultLocale && !(camelKey in defaultSectionStrings)) {
         viteContext.warn(
           createLogMessage(
-            `Non-matching localization key found; '${ sectionName }.${ key }'. Only keys in the default locale '${ defaultLocale }' are allowed in the other locales.`,
+            `Non-matching localization key found; '${ sectionName }.${ key }'. Only keys in the default locale '${ appliedDefaultLocale }' are allowed in the other locales.`,
             undefined,
             '',
             WARN_KEY_EXCLUDED
@@ -327,7 +345,7 @@ export function typedI18nPlugin({
             value: JSON.stringify(value)
           }
         );
-        if (locale === defaultLocale) {
+        if (locale === appliedDefaultLocale) {
           sectionTypeMembers += fillInTemplate(
             indexStringsMemberConstTemplate,
             {
@@ -371,7 +389,7 @@ export function typedI18nPlugin({
         }
       );
 
-      if (locale === defaultLocale) {
+      if (locale === appliedDefaultLocale) {
         sectionTypeMembers += fillInTemplate(
           indexStringsMemberFormatTemplate,
           {
@@ -416,6 +434,7 @@ export function typedI18nPlugin({
         if (error === XML_TAGS_UNSUPPORTED) {
           return null;
         }
+        throw error;
       }
 
       function parseMessageArgsImpl(subMessageAst: MessageFormatElement[], args: Record<string, string>) {
@@ -481,6 +500,10 @@ export function typedI18nPlugin({
     }
   }
 
+  function isYaml(filename: string) {
+    return filename.endsWith('.yaml') || filename.endsWith('.yml');
+  }
+
   async function loadTemplate(filename: string) {
     const templatePath = path.join(appliedTemplatesDir, filename);
     try {
@@ -491,10 +514,14 @@ export function typedI18nPlugin({
   }
 
   function fillInTemplate(template: string, placeholders: Record<string, unknown>) {
+    const trimmedPlaceholders = {} as Record<string, unknown>;
+    for (const [ key, value ] of Object.entries(placeholders)) {
+      trimmedPlaceholders[ key ] = String(value).trimEnd();
+    }
     return replacePlaceholers(
       {
         text: template,
-        placeholders,
+        placeholders: trimmedPlaceholders,
         markerPrefix: '%',
         markerSuffix: '%'
       }

@@ -9,16 +9,16 @@ export const locales = [
   %localeList%
 ];
 
-export const defaultLocale = '%defaultLocale%';
+export const defaultLocale = '%appliedDefaultLocale%';
 
 export interface LocalizedStrings {
   locale: string;
-  %stringsTypeSections%
+%stringsTypeSections%
 }
 
 %propTypeDeclarations%
 
-export function getLocale(locale: string) {
+export async function getLocale(locale: string) {
   if (!locales.includes(locale)) {
     throw new Error(`Requested an unsupported locale. Requested ${ locale }. Available locales are ${ locales.join(', ') }.`);
   }
