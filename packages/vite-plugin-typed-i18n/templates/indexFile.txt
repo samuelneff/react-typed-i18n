@@ -6,7 +6,6 @@
 //
 
 export const locales = [
-  %localeList%
 ];
 
 export const defaultLocale = '%appliedDefaultLocale%';
@@ -18,11 +17,18 @@ export interface LocalizedStrings {
 
 %propTypeDeclarations%
 
-export async function getLocale(locale: string) {
-  if (!locales.includes(locale)) {
-    throw new Error(`Requested an unsupported locale. Requested ${ locale }. Available locales are ${ locales.join(', ') }.`);
-  }
+export const localeProvider = {
+  locales: [
+    %localeList%
+  ],
+  defaultLocale: '%appliedDefaultLocale%',
 
-  const stringsModule = await import(`./${ locale }`);
-  return stringsModule.strings;
-}
+  async getLocale(locale: string) {
+    if (!this.locales.includes(locale)) {
+      throw new Error(`Requested an unsupported locale. Requested ${ locale }. Available locales are ${ locales.join(', ') }.`);
+    }
+
+    const stringsModule = await import(`./${ locale }`);
+    return stringsModule.strings as LocalizedStrings;
+  }
+};

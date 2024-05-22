@@ -171,7 +171,7 @@ export function typedI18nPlugin({
       const indexFileContent = fillInTemplate(
         indexFileTemplate,
         {
-          localeList: `"${ locales.join('",\n  "') }"`,
+          localeList: `"${ locales.join('",\n    "') }"`,
           appliedDefaultLocale,
           stringsTypeSections,
           propTypeDeclarations,

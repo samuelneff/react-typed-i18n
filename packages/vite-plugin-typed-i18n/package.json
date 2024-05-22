@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "start": "tsx test/index",
     "test": "vitest run",
     "test:watch": "vitest watch"
   },
@@ -14,7 +15,7 @@
   },
   "keywords": [
     "i18n",
-    "react",
+    "vite-plugin",
     "localization"
   ],
   "author": "Samuel Neff <sam@serndesign.com>",

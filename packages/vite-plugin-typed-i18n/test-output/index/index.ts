@@ -6,8 +6,6 @@
 //
 
 export const locales = [
-  "en-US",
-  "es-US"
 ];
 
 export const defaultLocale = 'en-US';
@@ -35,11 +33,19 @@ export interface HomeIntroProps {
   days: string;
 }
 
-export async function getLocale(locale: string) {
-  if (!locales.includes(locale)) {
-    throw new Error(`Requested an unsupported locale. Requested ${ locale }. Available locales are ${ locales.join(', ') }.`);
-  }
+export const localeProvider = {
+  locales: [
+    "en-US",
+    "es-US"
+  ],
+  defaultLocale: 'en-US',
 
-  const stringsModule = await import(`./${ locale }`);
-  return stringsModule.strings;
-}
+  async getLocale(locale: string) {
+    if (!this.locales.includes(locale)) {
+      throw new Error(`Requested an unsupported locale. Requested ${ locale }. Available locales are ${ locales.join(', ') }.`);
+    }
+
+    const stringsModule = await import(`./${ locale }`);
+    return stringsModule.strings as LocalizedStrings;
+  }
+};
