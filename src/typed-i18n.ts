@@ -14,8 +14,6 @@ import {
 import { IntlMessageFormat } from 'intl-messageformat';
 import { MessageFormatElement, TYPE } from '@formatjs/icu-messageformat-parser';
 
-export type PopulateOtherLocalesStrategy = 'none' | 'copy' | 'placeholder' | 'translate';
-
 type StringTree = Record<string, Record<string, string>>;
 
 const digitStartPattern = /^\d/;
@@ -25,8 +23,9 @@ const ERROR_OTHER_LOCALE_SKIP = 'Since this is a translated locale it will be sk
 const ERROR_KEY_EXCLUDED = 'This key will be excluded from all locales.';
 const WARN_KEY_EXCLUDED = 'This key will be excluded from this locale.';
 
-export interface GenerateLocalesProps {
-  locale?: string;
+export type PopulateOtherLocalesStrategy = 'none' | 'copy' | 'placeholder' | 'translate';
+
+export interface GenerateLocalesPropsBase {
   sourceDir: string;
   outDir: string;
   defaultLocale?: string;
@@ -35,8 +34,12 @@ export interface GenerateLocalesProps {
   missingText?: string;
   populateOtherLocales?: PopulateOtherLocalesStrategy;
   populatePlaceholder?: string;
-  logWarn(message: string): void;
-  logError(message: string): void;
+}
+
+export interface GenerateLocalesProps extends GenerateLocalesPropsBase {
+  locale?: string;
+  logWarn?(message: string): void;
+  logError?(message: string): void;
 }
 
 export async function generateLocales({
@@ -49,9 +52,12 @@ export async function generateLocales({
   missingText,
   populateOtherLocales,
   populatePlaceholder,
-  logWarn,
-  logError,
+  logWarn: logWarnProp,
+  logError: logErrorProp,
 }: GenerateLocalesProps) {
+
+  const logWarn = logWarnProp ?? console.warn;
+  const logError = logErrorProp ?? console.error;
 
   let stringsTypeSections = '';
   let propTypeDeclarations = '';
@@ -543,4 +549,3 @@ export async function generateLocales({
     );
   }
 }
-

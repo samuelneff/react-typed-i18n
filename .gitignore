@@ -1,3 +1,7 @@
+# build and test files
+dist
+output
+
 # Logs
 logs
 *.log
