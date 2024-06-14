@@ -1,0 +1,1 @@
+// just to trick plugin to use react mode

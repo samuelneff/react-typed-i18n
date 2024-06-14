@@ -4,20 +4,18 @@
 //
 // Localized strings for es-US.
 //
-import IntlMessageFormat from 'intl-messageformat';
+import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
 import {
   LocalizedStrings,
   HomeWelcomeProps,
   HomeIntroProps,
 } from './index';
-import { createTagFunctionWrapper } from './tag-functions';
 
 const formatters = {} as Record<string, IntlMessageFormat>;
-const wrapWithTagFunctions = createTagFunctionWrapper('es-US');
 
 export const strings: LocalizedStrings = {
   locale: 'es-US',
-
+  chooseLocale(newLocale: string) {}, // swapped at runtime
   home: {
     title: "Casa",
     welcome(props: HomeWelcomeProps) {
@@ -38,10 +36,10 @@ export const strings: LocalizedStrings = {
                 "value": "!"
               }
             ],
-            'es-US'
+            '%locale%'
           )
         )
-      ).format(wrapWithTagFunctions(props)) as string;
+      ).format(props as unknown as Record<string, PrimitiveType>) as string;
     },
     intro(props: HomeIntroProps) {
       return (
@@ -93,10 +91,10 @@ export const strings: LocalizedStrings = {
                 "value": " desde que estuviste aquí."
               }
             ],
-            'es-US'
+            '%locale%'
           )
         )
-      ).format(wrapWithTagFunctions(props)) as string;
+      ).format(props as unknown as Record<string, PrimitiveType>) as string;
     },
   },
   login: {

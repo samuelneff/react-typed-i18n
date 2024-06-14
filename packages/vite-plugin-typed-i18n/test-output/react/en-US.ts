@@ -2,24 +2,22 @@
 //
 // GENERATED FILE - DO NOT EDIT
 //
-// Localized strings for es-US.
+// Localized strings for en-US.
 //
-import IntlMessageFormat from 'intl-messageformat';
+import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
 import {
   LocalizedStrings,
   HomeWelcomeProps,
   HomeIntroProps,
 } from './index';
-import { createTagFunctionWrapper } from './tag-functions';
 
 const formatters = {} as Record<string, IntlMessageFormat>;
-const wrapWithTagFunctions = createTagFunctionWrapper('es-US');
 
 export const strings: LocalizedStrings = {
-  locale: 'es-US',
-
+  locale: 'en-US',
+  chooseLocale(newLocale: string) {}, // swapped at runtime
   home: {
-    title: "Casa",
+    title: "Home",
     welcome(props: HomeWelcomeProps) {
       return (
         formatters['homeWelcome'] ?? (
@@ -27,7 +25,7 @@ export const strings: LocalizedStrings = {
             [
               {
                 "type": 0,
-                "value": "¡Hola "
+                "value": "Hello "
               },
               {
                 "type": 1,
@@ -38,10 +36,10 @@ export const strings: LocalizedStrings = {
                 "value": "!"
               }
             ],
-            'es-US'
+            '%locale%'
           )
         )
-      ).format(wrapWithTagFunctions(props)) as string;
+      ).format(props as unknown as Record<string, PrimitiveType>) as string;
     },
     intro(props: HomeIntroProps) {
       return (
@@ -50,7 +48,7 @@ export const strings: LocalizedStrings = {
             [
               {
                 "type": 0,
-                "value": "¡Bienvenido de nuevo! Ha pasado "
+                "value": "Welcome back! It's been "
               },
               {
                 "type": 6,
@@ -60,7 +58,7 @@ export const strings: LocalizedStrings = {
                     "value": [
                       {
                         "type": 0,
-                        "value": "solo un rato"
+                        "value": "no time at all"
                       }
                     ]
                   },
@@ -68,7 +66,7 @@ export const strings: LocalizedStrings = {
                     "value": [
                       {
                         "type": 0,
-                        "value": "solo un día"
+                        "value": "just a day"
                       }
                     ]
                   },
@@ -80,7 +78,7 @@ export const strings: LocalizedStrings = {
                       },
                       {
                         "type": 0,
-                        "value": " días"
+                        "value": " days"
                       }
                     ]
                   }
@@ -90,20 +88,20 @@ export const strings: LocalizedStrings = {
               },
               {
                 "type": 0,
-                "value": " desde que estuviste aquí."
+                "value": "."
               }
             ],
-            'es-US'
+            '%locale%'
           )
         )
-      ).format(wrapWithTagFunctions(props)) as string;
+      ).format(props as unknown as Record<string, PrimitiveType>) as string;
     },
   },
   login: {
-    title: "Iniciar sesión",
-    email: "Correo",
-    password: "Contraseña",
-    forgot: "Olvido mi contraseña",
-    submit: "Vamos",
+    title: "Sign-in",
+    email: "E-Mail",
+    password: "Password",
+    forgot: "Forgot password",
+    submit: "Submit",
   },
 };

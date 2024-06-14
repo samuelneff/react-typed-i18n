@@ -6,5 +6,5 @@
             '%locale%'
           )
         )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+      ).format(wrapWithTagFunctions(props)) as string;
     },

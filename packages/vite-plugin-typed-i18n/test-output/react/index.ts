@@ -44,4 +44,13 @@ export async function getLocalizedStrings(locale: string) {
   return stringsModule.strings as LocalizedStrings;
 }
 
+// Injected React support
+export interface LocalizedStrings {
+  chooseLocale(newLocale: string): void;
+}
 
+export {
+  LocalizedStringProvider,
+  type LocalizedStringProviderProps
+} from './LocalizedStringProvider';
+export { useLocale } from './useLocale';

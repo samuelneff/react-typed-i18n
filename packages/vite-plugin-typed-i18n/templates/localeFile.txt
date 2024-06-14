@@ -4,15 +4,18 @@
 //
 // Localized strings for %locale%.
 //
-import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
+import IntlMessageFormat from 'intl-messageformat';
 import {
   LocalizedStrings,
 %importPropTypes%
 } from './index';
+import { createTagFunctionWrapper } from './tag-functions';
 
 const formatters = {} as Record<string, IntlMessageFormat>;
+const wrapWithTagFunctions = createTagFunctionWrapper('%locale%');
 
 export const strings: LocalizedStrings = {
   locale: '%locale%',
+%reactSupportLocalizedStrings%
 %localizedStringsSections%
 };

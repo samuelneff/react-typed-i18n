@@ -19,6 +19,7 @@ export interface TypedI18nPluginProps {
   sourceDir: string;
   outDir: string;
   defaultLocale?: string;
+  reactSupport?: boolean;
   templatesDir?: string;
   missingText?: string;
   populateOtherLocales?: TypedI18nPopulationStrategy;
@@ -39,6 +40,7 @@ export function typedI18nPlugin({
   outDir,
   defaultLocale,
   templatesDir,
+  reactSupport: reactSupportProp,
   missingText,
   populateOtherLocales,
   populatePlaceholder,
@@ -59,6 +61,10 @@ export function typedI18nPlugin({
   let localeMemberFormatTemplate: string;
   let localeSectionTemplate: string;
 
+  let localizedStringProviderFileTemplate: string;
+  let localeReactSupportTemplate: string;
+  let tagFunctionsTemplate: string;
+  let useLocaleFileTemplate: string;
 
   let stringsTypeSections = '';
   let propTypeDeclarations = '';
@@ -66,10 +72,12 @@ export function typedI18nPlugin({
   let importPropTypes = '';
   let localizedStringsSectionMembers = '';
   let localizedStringsSections = '';
+  let reactSupportReexports = '';
 
   let locales: string[];
   let viteContext: PluginContext;
   let defaultStrings = {} as StringTree;
+  let reactSupport: boolean;
 
   return {
     name: 'typedI18n',
@@ -87,6 +95,18 @@ export function typedI18nPlugin({
       localeSectionTemplate = await loadTemplate('localeSection.txt');
       localeMemberConstTemplate = await loadTemplate('localeMemberConst.txt');
       localeMemberFormatTemplate = await loadTemplate('localeMemberFormat.txt');
+      tagFunctionsTemplate = await loadTemplate('tagFunctionsFile.txt');
+
+      reactSupport = typeof reactSupportProp === 'boolean'
+        ? reactSupportProp
+        : await detectReactSupport();
+
+      if (reactSupport) {
+        localizedStringProviderFileTemplate = await loadTemplate('LocalizedStringProviderFile.txt');
+        reactSupportReexports = await loadTemplate('indexReactSupport.txt');
+        useLocaleFileTemplate = await loadTemplate('useLocaleFile.txt');
+        localeReactSupportTemplate = await loadTemplate('localeReactSupport.txt');
+      }
 
       this.addWatchFile(sourceDir);
       await readLocaleDirs();
@@ -106,6 +126,16 @@ export function typedI18nPlugin({
       }
     }
   } as Plugin;
+
+  async function detectReactSupport() {
+    const sourceDir = substringStart(outDir, '/src/');
+    if (!sourceDir) {
+      return false;
+    }
+
+    const files = await fs.readdir(sourceDir, { recursive: true });
+    return files.some(filepath => filepath.endsWith('.tsx'));
+  }
 
   async function readLocaleDirs() {
     const newLocales = await fs.readdir(sourceDir);
@@ -162,19 +192,29 @@ export function typedI18nPlugin({
         importPropTypes,
         locale,
         localizedStringsSections,
+        reactSupportLocalizedStrings: reactSupport ? localeReactSupportTemplate : '',
       }
     );
 
     await fs.writeFile(path.join(outDir, `${ locale }.ts`), localeFileContent);
 
     if (locale === appliedDefaultLocale) {
+
+      if (reactSupport) {
+        await fs.writeFile(path.join(outDir, 'LocalizedStringProvider.tsx'), localizedStringProviderFileTemplate);
+        await fs.writeFile(path.join(outDir, 'useLocale.ts'), useLocaleFileTemplate);
+      }
+
+      await fs.writeFile(path.join(outDir, 'tag-functions.ts'), tagFunctionsTemplate);
+
       const indexFileContent = fillInTemplate(
         indexFileTemplate,
         {
-          localeList: `"${ locales.join('",\n    "') }"`,
+          localeList: `"${ locales.join('",\n  "') }"`,
           appliedDefaultLocale,
           stringsTypeSections,
           propTypeDeclarations,
+          reactSupportReexports,
         }
       );
       await fs.writeFile(path.join(outDir, 'index.ts'), indexFileContent);
@@ -383,6 +423,7 @@ export function typedI18nPlugin({
         localeMemberFormatTemplate,
         {
           camelKey,
+          locale,
           propsType,
           formatterKey,
           ast: JSON.stringify(valueAst, undefined, 2).replace(/\n/g, '\n            ')
