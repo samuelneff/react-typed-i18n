@@ -2,7 +2,7 @@
   "name": "typed-i18n",
   "version": "1.0.0",
   "description": "Fully typed internationalization system with compile-time checked localization files.",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "test": "jest"
   },

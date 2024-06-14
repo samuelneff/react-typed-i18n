@@ -1,8 +1,9 @@
 import * as fs from 'fs/promises';
-import { camelCase, upperFirst } from 'lodash';
+import {
+  camelCase,
+  upperFirst
+} from 'lodash';
 import * as path from 'path';
-import { PluginContext } from 'rollup';
-import { HmrContext, Plugin } from 'vite';
 import { parse as parseYaml } from 'yaml';
 import {
   isNullOrUndefined,
@@ -12,30 +13,34 @@ import {
 } from 'utikity';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { MessageFormatElement, TYPE } from '@formatjs/icu-messageformat-parser';
-import { } from '../../typed-i18n/src';
-export type TypedI18nPopulationStrategy = 'none' | 'copy' | 'placeholder' | 'translate';
 
-export interface TypedI18nPluginProps {
-  sourceDir: string;
-  outDir: string;
-  defaultLocale?: string;
-  reactSupport?: boolean;
-  templatesDir?: string;
-  missingText?: string;
-  populateOtherLocales?: Popul;
-  populatePlaceholder?: string;
-}
+export type PopulateOtherLocalesStrategy = 'none' | 'copy' | 'placeholder' | 'translate';
 
 type StringTree = Record<string, Record<string, string>>;
 
 const digitStartPattern = /^\d/;
 
 const ERROR_DEFAULT_LOCALE_STOP_ALL = 'Since this is the default locale all localization will stop and new localized files will not be generated.';
-const ERROR_OTHER_LOCALE_SKIP = 'Since this is a translated locale it will be skipped but localization of other locales will proceed.'
+const ERROR_OTHER_LOCALE_SKIP = 'Since this is a translated locale it will be skipped but localization of other locales will proceed.';
 const ERROR_KEY_EXCLUDED = 'This key will be excluded from all locales.';
 const WARN_KEY_EXCLUDED = 'This key will be excluded from this locale.';
 
-export function typedI18nPlugin({
+export interface GenerateLocalesProps {
+  locale?: string;
+  sourceDir: string;
+  outDir: string;
+  defaultLocale?: string;
+  reactSupport?: boolean;
+  templatesDir?: string;
+  missingText?: string;
+  populateOtherLocales?: PopulateOtherLocalesStrategy;
+  populatePlaceholder?: string;
+  logWarn(message: string): void;
+  logError(message: string): void;
+}
+
+export async function generateLocales({
+  locale,
   sourceDir,
   outDir,
   defaultLocale,
@@ -44,27 +49,9 @@ export function typedI18nPlugin({
   missingText,
   populateOtherLocales,
   populatePlaceholder,
-}: TypedI18nPluginProps) {
-
-  const appliedDefaultLocale = defaultLocale ?? Intl.DateTimeFormat().resolvedOptions().locale;
-  const appliedTemplatesDir = templatesDir ?? path.join(__dirname, '../templates');
-
-  let indexStringsMemberConstTemplate: string;
-  let indexStringsMemberFormatTemplate: string;
-  let indexPropTypeMemberTemplate: string;
-  let indexPropTypeDeclarationTemplate: string;
-  let indexStringsSectionTemplate: string;
-  let indexFileTemplate: string;
-  let localeMemberConstTemplate: string;
-  let localeFileTemplate: string;
-  let localeImportPropTypeTemplate: string;
-  let localeMemberFormatTemplate: string;
-  let localeSectionTemplate: string;
-
-  let localizedStringProviderFileTemplate: string;
-  let localeReactSupportTemplate: string;
-  let tagFunctionsTemplate: string;
-  let useLocaleFileTemplate: string;
+  logWarn,
+  logError,
+}: GenerateLocalesProps) {
 
   let stringsTypeSections = '';
   let propTypeDeclarations = '';
@@ -75,57 +62,45 @@ export function typedI18nPlugin({
   let reactSupportReexports = '';
 
   let locales: string[];
-  let viteContext: PluginContext;
   let defaultStrings = {} as StringTree;
-  let reactSupport: boolean;
 
-  return {
-    name: 'typedI18n',
-    async buildStart(this: PluginContext) {
-      viteContext = this;
+  const appliedDefaultLocale = defaultLocale ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const appliedTemplatesDir = templatesDir ?? path.join(__dirname, '../templates');
 
-      indexFileTemplate = await loadTemplate('indexFile.txt');
-      indexStringsSectionTemplate = await loadTemplate('indexStringsSection.txt');
-      indexStringsMemberConstTemplate = await loadTemplate('indexStringsMemberConst.txt');
-      indexStringsMemberFormatTemplate = await loadTemplate('indexStringsMemberFormat.txt');
-      indexPropTypeDeclarationTemplate = await loadTemplate('indexPropTypeDeclaration.txt');
-      indexPropTypeMemberTemplate = await loadTemplate('indexPropTypeMember.txt');
-      localeFileTemplate = await loadTemplate('localeFile.txt');
-      localeImportPropTypeTemplate = await loadTemplate('localeImportPropType.txt');
-      localeSectionTemplate = await loadTemplate('localeSection.txt');
-      localeMemberConstTemplate = await loadTemplate('localeMemberConst.txt');
-      localeMemberFormatTemplate = await loadTemplate('localeMemberFormat.txt');
-      tagFunctionsTemplate = await loadTemplate('tagFunctionsFile.txt');
+  const indexFileTemplate = await loadTemplate('indexFile.txt');
+  const indexStringsSectionTemplate = await loadTemplate('indexStringsSection.txt');
+  const indexStringsMemberConstTemplate = await loadTemplate('indexStringsMemberConst.txt');
+  const indexStringsMemberFormatTemplate = await loadTemplate('indexStringsMemberFormat.txt');
+  const indexPropTypeDeclarationTemplate = await loadTemplate('indexPropTypeDeclaration.txt');
+  const indexPropTypeMemberTemplate = await loadTemplate('indexPropTypeMember.txt');
+  const localeFileTemplate = await loadTemplate('localeFile.txt');
+  const localeImportPropTypeTemplate = await loadTemplate('localeImportPropType.txt');
+  const localeSectionTemplate = await loadTemplate('localeSection.txt');
+  const localeMemberConstTemplate = await loadTemplate('localeMemberConst.txt');
+  const localeMemberFormatTemplate = await loadTemplate('localeMemberFormat.txt');
+  const tagFunctionsTemplate = await loadTemplate('tagFunctionsFile.txt');
 
-      reactSupport = typeof reactSupportProp === 'boolean'
-        ? reactSupportProp
-        : await detectReactSupport();
+  const reactSupport = typeof reactSupportProp === 'boolean'
+    ? reactSupportProp
+    : await detectReactSupport();
 
-      if (reactSupport) {
-        localizedStringProviderFileTemplate = await loadTemplate('LocalizedStringProviderFile.txt');
-        reactSupportReexports = await loadTemplate('indexReactSupport.txt');
-        useLocaleFileTemplate = await loadTemplate('useLocaleFile.txt');
-        localeReactSupportTemplate = await loadTemplate('localeReactSupport.txt');
-      }
+  let localizedStringProviderFileTemplate: string;
+  let localeReactSupportTemplate: string;
+  let useLocaleFileTemplate: string;
 
-      this.addWatchFile(sourceDir);
-      await readLocaleDirs();
-      await generateAllLocales();
-    },
+  if (reactSupport) {
+    localizedStringProviderFileTemplate = await loadTemplate('LocalizedStringProviderFile.txt');
+    reactSupportReexports = await loadTemplate('indexReactSupport.txt');
+    useLocaleFileTemplate = await loadTemplate('useLocaleFile.txt');
+    localeReactSupportTemplate = await loadTemplate('localeReactSupport.txt');
+  }
 
-    async handleHotUpdate({ file }: HmrContext) {
-
-      if (!file.startsWith(sourceDir) || !isYaml(file)) {
-        return;
-      }
-      const hotLocale = path.basename(path.dirname(file));
-      if (hotLocale === appliedDefaultLocale) {
-        await generateAllLocales();
-      } else {
-        await generateLocale(hotLocale);
-      }
-    }
-  } as Plugin;
+  await readLocaleDirs();
+  if (locale) {
+    await generateLocale(locale);
+  } else {
+    await generateAllLocales();
+  }
 
   async function detectReactSupport() {
     const sourceDir = substringStart(outDir, '/src/');
@@ -142,7 +117,7 @@ export function typedI18nPlugin({
     const defaultIndex = newLocales.indexOf(appliedDefaultLocale);
 
     if (defaultIndex === -1) {
-      viteContext.warn(`typed-i18n: No localization found for default locale '${ appliedDefaultLocale }. Found ${ newLocales.join(',') }.`);
+      logWarn(`typed-i18n: No localization found for default locale '${ appliedDefaultLocale }. Found ${ newLocales.join(',') }.`);
     } else {
       newLocales.splice(defaultIndex, 1);
       newLocales.unshift(appliedDefaultLocale);
@@ -237,7 +212,7 @@ export function typedI18nPlugin({
       }
 
       if (error) {
-        fullMessage += `\n\n${ (error as Error).stack ?? error }`
+        fullMessage += `\n\n${ (error as Error).stack ?? error }`;
       }
       return fullMessage;
     }
@@ -256,9 +231,9 @@ export function typedI18nPlugin({
       );
 
       if (locale === appliedDefaultLocale) {
-        viteContext.error(fullMessage);
+        logError(fullMessage);
       }
-      viteContext.warn(fullMessage);
+      logWarn(fullMessage);
 
       return fullMessage;
     }
@@ -296,7 +271,7 @@ export function typedI18nPlugin({
         localizedStringsSectionMembers = '';
         sectionTypeMembers = '';
         const entries = Object.entries(sectionStrings);
-        for (const [key, value] of entries) {
+        for (const [ key, value ] of entries) {
           localizeEntry(sectionName, key, value);
         }
 
@@ -306,7 +281,7 @@ export function typedI18nPlugin({
             sectionName,
             localizedStringsSectionMembers,
           }
-        )
+        );
 
         if (locale === appliedDefaultLocale) {
           stringsTypeSections += fillInTemplate(
@@ -318,7 +293,7 @@ export function typedI18nPlugin({
           );
         }
       } catch (error) {
-        viteContext.warn(
+        logWarn(
           createLogMessage(
             `An unexpected error processing '${ sectionName }.'`,
             error,
@@ -337,7 +312,7 @@ export function typedI18nPlugin({
     ) {
       const camelKey = camelCase(key);
       if (digitStartPattern.test(camelKey)) {
-        viteContext.warn(
+        logWarn(
           createLogMessage(
             `Invalid localization key '${ sectionName }.${ key }'. Keys cannot start with a number.`,
             undefined,
@@ -353,7 +328,7 @@ export function typedI18nPlugin({
       }
 
       if (!isString(value)) {
-        viteContext.warn(
+        logWarn(
           createLogMessage(
             `Unsupported localization value found '${ sectionName }.${ key }'. Only strings are supported but '${ typeof value }' was found.`,
             undefined,
@@ -366,7 +341,7 @@ export function typedI18nPlugin({
 
       const defaultSectionStrings = defaultStrings[ sectionName ];
       if (locale !== appliedDefaultLocale && !(camelKey in defaultSectionStrings)) {
-        viteContext.warn(
+        logWarn(
           createLogMessage(
             `Non-matching localization key found; '${ sectionName }.${ key }'. Only keys in the default locale '${ appliedDefaultLocale }' are allowed in the other locales.`,
             undefined,
@@ -548,7 +523,8 @@ export function typedI18nPlugin({
     try {
       return await fs.readFile(templatePath, 'utf-8');
     } catch (error) {
-      viteContext.error(`typed-i18n: Error reading template file. Localization failed.\n\nFile: ${ templatePath }\n\n${ (error as Error).stack ?? error }`);
+      logError(`typed-i18n: Error reading template file. Localization failed.\n\nFile: ${ templatePath }\n\n${ (error as Error).stack ?? error }`);
+      return `/* An Error occurred generating locales\n\n${ error }\n\n*/`;
     }
   }
 
