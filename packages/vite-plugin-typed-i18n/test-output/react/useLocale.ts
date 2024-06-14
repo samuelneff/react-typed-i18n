@@ -1,12 +1,12 @@
 import {
+  createContext,
+  useContext
+} from 'react';
+import {
   defaultLocale,
   locales,
   LocalizedStrings
 } from './index';
-import {
-  createContext,
-  useContext
-} from 'react';
 
 const localStorageActiveLocaleKey = 'typed-i18n-chosen-locale';
 

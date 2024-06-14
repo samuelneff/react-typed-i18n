@@ -4,14 +4,16 @@
 //
 // Localized strings for es-US.
 //
-import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
+import IntlMessageFormat from 'intl-messageformat';
 import {
   LocalizedStrings,
   HomeWelcomeProps,
   HomeIntroProps,
 } from './index';
+import { createTagFunctionWrapper } from './tag-functions';
 
 const formatters = {} as Record<string, IntlMessageFormat>;
+const wrapWithTagFunctions = createTagFunctionWrapper('es-US');
 
 export const strings: LocalizedStrings = {
   locale: 'es-US',
@@ -36,10 +38,10 @@ export const strings: LocalizedStrings = {
                 "value": "!"
               }
             ],
-            '%locale%'
+            'es-US'
           )
         )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+      ).format(wrapWithTagFunctions(props)) as string;
     },
     intro(props: HomeIntroProps) {
       return (
@@ -91,10 +93,10 @@ export const strings: LocalizedStrings = {
                 "value": " desde que estuviste aquí."
               }
             ],
-            '%locale%'
+            'es-US'
           )
         )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+      ).format(wrapWithTagFunctions(props)) as string;
     },
   },
   login: {

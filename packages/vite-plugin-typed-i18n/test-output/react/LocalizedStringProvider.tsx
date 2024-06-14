@@ -23,7 +23,6 @@ export interface LocalizedStringProviderProps {
 }
 
 export function LocalizedStringProvider({ locale, children }: LocalizedStringProviderProps) {
-  console.log('LocalizedStringProvider running');
   const chooseLocale = useCallback(
     async (newLocale: string) => {
       if (!locales.includes(newLocale)) {
@@ -46,10 +45,8 @@ export function LocalizedStringProvider({ locale, children }: LocalizedStringPro
   useEffect(
     () => {
       async function chooseDefaultLocale() {
-        console.log('LocalizedStringProvider::useEffect running');
         const effectiveLocale = findSupportedLocale(locale);
         const strings = await getLocalizedStrings(effectiveLocale);
-        console.log('LocalizedStringProvider::useEffect continuing');
         setActiveLocale(
           {
             ...strings,

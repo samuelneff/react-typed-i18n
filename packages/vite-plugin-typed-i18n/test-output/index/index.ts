@@ -18,6 +18,7 @@ export interface LocalizedStrings {
     title: string;
     welcome(props: HomeWelcomeProps): string;
     intro(props: HomeIntroProps): string;
+    tagTest(props: HomeTagTestProps): string;
   };
   login: {
     title: string;
@@ -33,6 +34,9 @@ export interface HomeWelcomeProps {
 }
 export interface HomeIntroProps {
   days: string;
+}
+export interface HomeTagTestProps {
+
 }
 
 export async function getLocalizedStrings(locale: string) {

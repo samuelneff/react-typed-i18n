@@ -4,20 +4,21 @@
 //
 // Localized strings for en-US.
 //
-import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
+import IntlMessageFormat from 'intl-messageformat';
 import {
   LocalizedStrings,
   HomeWelcomeProps,
   HomeIntroProps,
-  HomeWelcomeProps,
-  HomeIntroProps,
-
+  HomeTagTestProps,
 } from './index';
+import { createTagFunctionWrapper } from './tag-functions';
 
 const formatters = {} as Record<string, IntlMessageFormat>;
+const wrapWithTagFunctions = createTagFunctionWrapper('en-US');
 
 export const strings: LocalizedStrings = {
   locale: 'en-US',
+
   home: {
     title: "Home",
     welcome(props: HomeWelcomeProps) {
@@ -38,9 +39,10 @@ export const strings: LocalizedStrings = {
                 "value": "!"
               }
             ],
-            '%locale%'
+            'en-US'
           )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
     },
     intro(props: HomeIntroProps) {
       return (
@@ -92,91 +94,40 @@ export const strings: LocalizedStrings = {
                 "value": "."
               }
             ],
-            '%locale%'
+            'en-US'
           )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
     },
-
-  },
-  home: {
-    title: "Casa",
-    welcome(props: HomeWelcomeProps) {
+    tagTest(props: HomeTagTestProps) {
       return (
-        formatters['homeWelcome'] ?? (
-          formatters['homeWelcome'] = new IntlMessageFormat(
+        formatters['homeTagTest'] ?? (
+          formatters['homeTagTest'] = new IntlMessageFormat(
             [
               {
                 "type": 0,
-                "value": "¡Hola "
+                "value": "Hello "
               },
               {
-                "type": 1,
-                "value": "firstName"
+                "type": 8,
+                "value": "lower",
+                "children": [
+                  {
+                    "type": 1,
+                    "value": "name"
+                  }
+                ]
               },
               {
                 "type": 0,
                 "value": "!"
               }
             ],
-            '%locale%'
+            'en-US'
           )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
     },
-    intro(props: HomeIntroProps) {
-      return (
-        formatters['homeIntro'] ?? (
-          formatters['homeIntro'] = new IntlMessageFormat(
-            [
-              {
-                "type": 0,
-                "value": "¡Bienvenido de nuevo! Ha pasado "
-              },
-              {
-                "type": 6,
-                "value": "days",
-                "options": {
-                  "=0": {
-                    "value": [
-                      {
-                        "type": 0,
-                        "value": "solo un rato"
-                      }
-                    ]
-                  },
-                  "=1": {
-                    "value": [
-                      {
-                        "type": 0,
-                        "value": "solo un día"
-                      }
-                    ]
-                  },
-                  "other": {
-                    "value": [
-                      {
-                        "type": 1,
-                        "value": "days"
-                      },
-                      {
-                        "type": 0,
-                        "value": " días"
-                      }
-                    ]
-                  }
-                },
-                "offset": 0,
-                "pluralType": "cardinal"
-              },
-              {
-                "type": 0,
-                "value": " desde que estuviste aquí."
-              }
-            ],
-            '%locale%'
-          )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
-    },
-
   },
   login: {
     title: "Sign-in",
@@ -184,7 +135,5 @@ export const strings: LocalizedStrings = {
     password: "Password",
     forgot: "Forgot password",
     submit: "Submit",
-
   },
-
 };

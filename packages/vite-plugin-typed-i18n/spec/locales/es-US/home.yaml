@@ -1,3 +1,4 @@
 title: Casa
 welcome: ¡Hola {firstName}!
 intro: ¡Bienvenido de nuevo! Ha pasado {days, plural, =0 {solo un rato} =1 {solo un día} other {{days} días}} desde que estuviste aquí.
+tagTest: ¡Hola <lower>{name}</lower>!

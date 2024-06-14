@@ -9,6 +9,7 @@ import {
   LocalizedStrings,
   HomeWelcomeProps,
   HomeIntroProps,
+  HomeTagTestProps,
 } from './index';
 import { createTagFunctionWrapper } from './tag-functions';
 
@@ -91,6 +92,35 @@ export const strings: LocalizedStrings = {
               {
                 "type": 0,
                 "value": "."
+              }
+            ],
+            'en-US'
+          )
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
+    },
+    tagTest(props: HomeTagTestProps) {
+      return (
+        formatters['homeTagTest'] ?? (
+          formatters['homeTagTest'] = new IntlMessageFormat(
+            [
+              {
+                "type": 0,
+                "value": "Hello "
+              },
+              {
+                "type": 8,
+                "value": "lower",
+                "children": [
+                  {
+                    "type": 1,
+                    "value": "name"
+                  }
+                ]
+              },
+              {
+                "type": 0,
+                "value": "!"
               }
             ],
             'en-US'

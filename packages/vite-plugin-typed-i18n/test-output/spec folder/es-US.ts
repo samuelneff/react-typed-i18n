@@ -4,100 +4,21 @@
 //
 // Localized strings for es-US.
 //
-import IntlMessageFormat, { PrimitiveType } from 'intl-messageformat';
+import IntlMessageFormat from 'intl-messageformat';
 import {
   LocalizedStrings,
   HomeWelcomeProps,
   HomeIntroProps,
-  HomeWelcomeProps,
-  HomeIntroProps,
-
+  HomeTagTestProps,
 } from './index';
+import { createTagFunctionWrapper } from './tag-functions';
 
 const formatters = {} as Record<string, IntlMessageFormat>;
+const wrapWithTagFunctions = createTagFunctionWrapper('es-US');
 
 export const strings: LocalizedStrings = {
   locale: 'es-US',
-  home: {
-    title: "Home",
-    welcome(props: HomeWelcomeProps) {
-      return (
-        formatters['homeWelcome'] ?? (
-          formatters['homeWelcome'] = new IntlMessageFormat(
-            [
-              {
-                "type": 0,
-                "value": "Hello "
-              },
-              {
-                "type": 1,
-                "value": "firstName"
-              },
-              {
-                "type": 0,
-                "value": "!"
-              }
-            ],
-            '%locale%'
-          )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
-    },
-    intro(props: HomeIntroProps) {
-      return (
-        formatters['homeIntro'] ?? (
-          formatters['homeIntro'] = new IntlMessageFormat(
-            [
-              {
-                "type": 0,
-                "value": "Welcome back! It's been "
-              },
-              {
-                "type": 6,
-                "value": "days",
-                "options": {
-                  "=0": {
-                    "value": [
-                      {
-                        "type": 0,
-                        "value": "no time at all"
-                      }
-                    ]
-                  },
-                  "=1": {
-                    "value": [
-                      {
-                        "type": 0,
-                        "value": "just a day"
-                      }
-                    ]
-                  },
-                  "other": {
-                    "value": [
-                      {
-                        "type": 1,
-                        "value": "days"
-                      },
-                      {
-                        "type": 0,
-                        "value": " days"
-                      }
-                    ]
-                  }
-                },
-                "offset": 0,
-                "pluralType": "cardinal"
-              },
-              {
-                "type": 0,
-                "value": "."
-              }
-            ],
-            '%locale%'
-          )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
-    },
 
-  },
   home: {
     title: "Casa",
     welcome(props: HomeWelcomeProps) {
@@ -118,9 +39,10 @@ export const strings: LocalizedStrings = {
                 "value": "!"
               }
             ],
-            '%locale%'
+            'es-US'
           )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
     },
     intro(props: HomeIntroProps) {
       return (
@@ -172,19 +94,40 @@ export const strings: LocalizedStrings = {
                 "value": " desde que estuviste aquí."
               }
             ],
-            '%locale%'
+            'es-US'
           )
-      ).format(props as unknown as Record<string, PrimitiveType>) as string;
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
     },
-
-  },
-  login: {
-    title: "Sign-in",
-    email: "E-Mail",
-    password: "Password",
-    forgot: "Forgot password",
-    submit: "Submit",
-
+    tagTest(props: HomeTagTestProps) {
+      return (
+        formatters['homeTagTest'] ?? (
+          formatters['homeTagTest'] = new IntlMessageFormat(
+            [
+              {
+                "type": 0,
+                "value": "¡Hola "
+              },
+              {
+                "type": 8,
+                "value": "lower",
+                "children": [
+                  {
+                    "type": 1,
+                    "value": "name"
+                  }
+                ]
+              },
+              {
+                "type": 0,
+                "value": "!"
+              }
+            ],
+            'es-US'
+          )
+        )
+      ).format(wrapWithTagFunctions(props)) as string;
+    },
   },
   login: {
     title: "Iniciar sesión",
@@ -192,7 +135,5 @@ export const strings: LocalizedStrings = {
     password: "Contraseña",
     forgot: "Olvido mi contraseña",
     submit: "Vamos",
-
   },
-
 };

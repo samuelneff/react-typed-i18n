@@ -514,13 +514,7 @@ export function typedI18nPlugin({
               break;
 
             case TYPE.tag:
-              warnOrError(
-                `XML tags in messages are not supported by typed-i18n. Sorry. Remove the tag '${ part.value }' found in '${ sectionName }.${ key }'.`,
-                undefined,
-                ERROR_KEY_EXCLUDED,
-                WARN_KEY_EXCLUDED
-              );
-              throw XML_TAGS_UNSUPPORTED;
+              break;
           }
 
           if (dataType) {
