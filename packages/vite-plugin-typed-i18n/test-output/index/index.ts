@@ -36,7 +36,7 @@ export interface HomeIntroProps {
   days: string;
 }
 export interface HomeTagTestProps {
-
+  name: string;
 }
 
 export async function getLocalizedStrings(locale: string) {

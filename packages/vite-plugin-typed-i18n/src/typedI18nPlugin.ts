@@ -484,6 +484,7 @@ export function typedI18nPlugin({
           let dataType = '';
           const name = 'value' in part ? part.value : '';
           const options = 'options' in part ? part.options : null;
+          const children = 'children' in part ? part.children : null;
 
           switch (part.type) {
             case TYPE.literal:
@@ -529,6 +530,9 @@ export function typedI18nPlugin({
               Object.values(options).flatMap(option => option.value),
               args
             );
+          }
+          if (children) {
+            parseMessageArgsImpl(children, args);
           }
         }
       }
