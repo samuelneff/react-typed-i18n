@@ -1,5 +1,5 @@
 {
-  "name": "typed-i18n-workspace",
+  "name": "typed-i18n",
   "private": true,
   "version": "1.0.0",
   "description": "Fully typed internationalization system with compile-time checked localization files.",
@@ -8,7 +8,8 @@
     "build": "tsc",
     "test": "start"
   },
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
+  "bin": "./dist/src/cli.js",
   "dependencies": {
     "@aws-sdk/client-translate": "^3.577.0",
     "commander": "^12.1.0",

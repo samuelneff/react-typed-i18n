@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Command, OptionValues } from 'commander';
 import fs from 'node:fs';
 import { trimIndent } from 'utikity';

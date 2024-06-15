@@ -69,7 +69,12 @@ export async function generateLocales({
   let defaultStrings = {} as StringTree;
 
   const appliedDefaultLocale = defaultLocale ?? resolveCurrentLocale();
-  const appliedTemplatesDir = templatesDir ?? path.join(__dirname, '../templates');
+  const appliedTemplatesDir = await findAppliedTemplatesDir();
+
+  if (!appliedTemplatesDir) {
+    // already error'd
+    return;
+  }
 
   const indexFileTemplate = await loadTemplate('indexFile.txt');
   const indexStringsSectionTemplate = await loadTemplate('indexStringsSection.txt');
@@ -548,6 +553,34 @@ export async function generateLocales({
     return filename.endsWith('.yaml') || filename.endsWith('.yml');
   }
 
+  async function findAppliedTemplatesDir() {
+    if (templatesDir) {
+      if (!await fileExists(templatesDir)) {
+        logError(`Template directory does not exist: ${ templatesDir }`);
+        return '';
+      }
+      return templatesDir;
+    }
+
+    ;
+    let maybeTemplateDir: string | undefined = undefined;
+    for (
+      let searchDir = __dirname;
+      searchDir !== '/' && !/^\w:/.test(searchDir);
+      searchDir = path.resolve(searchDir, '..')
+    ) {
+      maybeTemplateDir = path.join(searchDir, 'templates');
+      if (await fileExists(maybeTemplateDir)) {
+        return maybeTemplateDir;
+      }
+      ;
+    }
+    if (maybeTemplateDir === undefined) {
+      logError(`Could not find templates directory; searched all parents of script directory: ${ __dirname }`);
+      return '';
+    }
+    return maybeTemplateDir;
+  }
   async function loadTemplate(filename: string) {
     const templatePath = path.join(appliedTemplatesDir, filename);
     try {
@@ -577,5 +610,14 @@ export async function generateLocales({
     if (verbose) {
       console.log(message);
     }
+  }
+}
+
+async function fileExists(filepath: string) {
+  try {
+    await fs.stat(filepath);
+    return true;
+  } catch {
+    return false;
   }
 }
