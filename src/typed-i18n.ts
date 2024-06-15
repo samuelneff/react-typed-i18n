@@ -1,6 +1,7 @@
 import * as fs from 'fs/promises';
 import {
   camelCase,
+  isObject,
   upperFirst
 } from 'lodash';
 import * as path from 'path';
@@ -32,9 +33,7 @@ export interface GenerateLocalesPropsBase {
   defaultLocale?: string;
   reactSupport?: boolean;
   templatesDir?: string;
-  missingText?: string;
-  populateOtherLocales?: PopulateOtherLocalesStrategy;
-  populatePlaceholder?: string;
+  verbose?: boolean;
 }
 
 export interface GenerateLocalesProps extends GenerateLocalesPropsBase {
@@ -50,9 +49,7 @@ export async function generateLocales({
   defaultLocale,
   templatesDir,
   reactSupport: reactSupportProp,
-  missingText,
-  populateOtherLocales,
-  populatePlaceholder,
+  verbose,
   logWarn: logWarnProp,
   logError: logErrorProp,
 }: GenerateLocalesProps) {
@@ -115,8 +112,17 @@ export async function generateLocales({
       return false;
     }
 
-    const files = await fs.readdir(sourceDir, { recursive: true });
-    return files.some(filepath => filepath.endsWith('.tsx'));
+    try {
+      const files = await fs.readdir(sourceDir, { recursive: true });
+      return files.some(filepath => filepath.endsWith('.tsx'));
+    } catch (error) {
+      if (isObject(error) && 'code' in error && error.code === 'ENOENT') {
+        // ignore, no react support since output directory doesn't exist
+      } else {
+        logError(`Error detecting React support; assuming false: ${ (error as Error).stack ?? error }`)
+      }
+      return false;
+    }
   }
 
   async function readLocaleDirs() {
@@ -140,6 +146,8 @@ export async function generateLocales({
   }
 
   async function generateLocale(locale: string) {
+
+    logVerbose(`${ locale }${ locale === appliedDefaultLocale ? ' (default)' : '' }`);
     const localeDir = path.join(sourceDir, locale);
     const filesnames = (
       await fs.readdir(localeDir)
@@ -178,6 +186,7 @@ export async function generateLocales({
       }
     );
 
+    await fs.mkdir(outDir, { recursive: true });
     await fs.writeFile(path.join(outDir, `${ locale }.ts`), localeFileContent);
 
     if (locale === appliedDefaultLocale) {
@@ -275,10 +284,13 @@ export async function generateLocales({
 
     function localizeSection(sectionName: string, sectionStrings: Record<string, string>) {
       try {
+        logVerbose(`  ${ sectionName }`);
+
         localizedStringsSectionMembers = '';
         sectionTypeMembers = '';
         const entries = Object.entries(sectionStrings);
         for (const [ key, value ] of entries) {
+          logVerbose(`    ${ key }`);
           localizeEntry(sectionName, key, value);
         }
 
@@ -294,6 +306,7 @@ export async function generateLocales({
         } else {
           for (const [ key, value ] of Object.entries(defaultStrings[ sectionName ])) {
             if (!(key in sectionStrings)) {
+              logVerbose(`    ${ key } (missing)`);
               localizedStringsSectionMembers += `    /* typed-i18n: Non-localized section key: ${ key } */\n`;
               localizedStringsSectionMembers += value;
             }
@@ -558,5 +571,11 @@ export async function generateLocales({
         markerSuffix: '%'
       }
     );
+  }
+
+  function logVerbose(message: string) {
+    if (verbose) {
+      console.log(message);
+    }
   }
 }
