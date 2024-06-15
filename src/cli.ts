@@ -33,7 +33,7 @@ const {
   out: outDir,
   // locale,
   default: defaultLocale,
-  react,
+  react: reactSupport,
   templates: templatesDir,
   verbose,
   help,
@@ -56,9 +56,7 @@ generateLocales({
   outDir,
   // locale,
   defaultLocale,
-  reactSupport: react == undefined
-    ? undefined
-    : react === 'true',
+  reactSupport,
   templatesDir,
   verbose,
   logWarn(message: string) {

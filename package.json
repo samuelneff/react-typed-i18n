@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Fully typed internationalization system with compile-time checked localization files.",
   "scripts": {
-    "start": "tsc && tsx test/index && tsx test/react",
+    "start": "tsc && ./test/basic.sh && ./test/react-specified.sh && ./test/react-detected.sh",
     "build": "tsc",
     "test": "start"
   },
