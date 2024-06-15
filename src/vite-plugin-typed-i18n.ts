@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { PluginContext } from 'rollup';
-import { HmrContext, Plugin } from 'vite';
+import { HmrContext } from 'vite';
 import { GenerateLocalesPropsBase, generateLocales } from './typed-i18n';
 export type TypedI18nPopulationStrategy = 'none' | 'copy' | 'placeholder' | 'translate';
 
@@ -37,7 +37,7 @@ export function typedI18nPlugin(props: TypedI18nPluginProps) {
           : undefined
       );
     }
-  } as Plugin;
+  };
 
   async function generateLocale(locale?: string) {
     await generateLocales({
