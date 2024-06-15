@@ -2,3 +2,4 @@ title: Home
 welcome: Hello {firstName}!
 intro: Welcome back! It's been {days, plural, =0 {no time at all} =1 {just a day} other {{days} days}}.
 tagTest: Hello <lower>{name}</lower>!
+missingInEsUs: This text should be in both en-US and es-US.

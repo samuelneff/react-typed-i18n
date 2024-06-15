@@ -13,6 +13,7 @@ import {
 } from 'utikity';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { MessageFormatElement, TYPE } from '@formatjs/icu-messageformat-parser';
+import { resolveCurrentLocale } from './resolveCurrentLocale.js';
 
 type StringTree = Record<string, Record<string, string>>;
 
@@ -70,7 +71,7 @@ export async function generateLocales({
   let locales: string[];
   let defaultStrings = {} as StringTree;
 
-  const appliedDefaultLocale = defaultLocale ?? Intl.DateTimeFormat().resolvedOptions().locale;
+  const appliedDefaultLocale = defaultLocale ?? resolveCurrentLocale();
   const appliedTemplatesDir = templatesDir ?? path.join(__dirname, '../templates');
 
   const indexFileTemplate = await loadTemplate('indexFile.txt');
@@ -281,13 +282,6 @@ export async function generateLocales({
           localizeEntry(sectionName, key, value);
         }
 
-        localizedStringsSections += fillInTemplate(
-          localeSectionTemplate,
-          {
-            sectionName,
-            localizedStringsSectionMembers,
-          }
-        );
 
         if (locale === appliedDefaultLocale) {
           stringsTypeSections += fillInTemplate(
@@ -297,7 +291,22 @@ export async function generateLocales({
               sectionTypeMembers,
             }
           );
+        } else {
+          for (const [ key, value ] of Object.entries(defaultStrings[ sectionName ])) {
+            if (!(key in sectionStrings)) {
+              localizedStringsSectionMembers += `    /* typed-i18n: Non-localized section key: ${ key } */\n`;
+              localizedStringsSectionMembers += value;
+            }
+          }
         }
+        localizedStringsSections += fillInTemplate(
+          localeSectionTemplate,
+          {
+            sectionName,
+            localizedStringsSectionMembers,
+          }
+        );
+
       } catch (error) {
         logWarn(
           createLogMessage(
@@ -359,13 +368,14 @@ export async function generateLocales({
       }
 
       if (!value.includes('{')) {
-        localizedStringsSectionMembers += fillInTemplate(
+        const localizedStringsSectionContent = fillInTemplate(
           localeMemberConstTemplate,
           {
             camelKey,
             value: JSON.stringify(value)
           }
         );
+        localizedStringsSectionMembers += localizedStringsSectionContent;
         if (locale === appliedDefaultLocale) {
           sectionTypeMembers += fillInTemplate(
             indexStringsMemberConstTemplate,
@@ -373,7 +383,7 @@ export async function generateLocales({
               camelKey
             }
           );
-          defaultSectionStrings[ key ] = 'string';
+          defaultSectionStrings[ key ] = localizedStringsSectionContent;
         }
         return;
       }
@@ -400,7 +410,7 @@ export async function generateLocales({
         }
       );
 
-      localizedStringsSectionMembers += fillInTemplate(
+      const localizedStringsSectionFunction = fillInTemplate(
         localeMemberFormatTemplate,
         {
           camelKey,
@@ -410,6 +420,7 @@ export async function generateLocales({
           ast: JSON.stringify(valueAst, undefined, 2).replace(/\n/g, '\n            ')
         }
       );
+      localizedStringsSectionMembers += localizedStringsSectionFunction;
 
       if (locale === appliedDefaultLocale) {
         sectionTypeMembers += fillInTemplate(
@@ -437,7 +448,7 @@ export async function generateLocales({
             formatPropMembers
           }
         );
-        defaultSectionStrings[ key ] = 'function';
+        defaultSectionStrings[ key ] = localizedStringsSectionFunction;
       }
     }
 
